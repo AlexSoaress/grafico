@@ -412,6 +412,8 @@
             }).join('');
         }
 
+        let totalBudget = 10000;
+
         function updateTotal() {
             const total = data.reduce((sum, item) => sum + item.value, 0);
             document.getElementById('totalValue').textContent = 'R$ ' + formatMoney(total);
@@ -422,7 +424,19 @@
             if (editMode.style.display === 'none') {
                 editMode.style.display = 'block';
                 const editInputs = document.getElementById('editInputs');
-                editInputs.innerHTML = data.map((item, index) => `
+                editInputs.innerHTML = `
+                    <div style="margin-bottom: 2rem; padding: 1.5rem; background: white; border-radius: 12px; border: 2px solid #667eea;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1a1a2e;">
+                            💰 Orçamento Total Mensal (R$)
+                        </label>
+                        <input type="number" value="${totalBudget}" id="totalBudget" 
+                               placeholder="10000" step="100" 
+                               style="width: 100%; font-size: 1.2rem; font-weight: 600;">
+                    </div>
+                    <div style="margin-bottom: 1rem; font-weight: 600; color: #1a1a2e;">
+                        📊 Categorias (valores serão ajustados proporcionalmente)
+                    </div>
+                ` + data.map((item, index) => `
                     <div class="input-group">
                         <input type="text" value="${item.label}" id="label${index}" placeholder="Categoria">
                         <input type="number" value="${item.value}" id="value${index}" placeholder="Valor (R$)" step="100">
@@ -434,14 +448,34 @@
         }
 
         function updateChart() {
-            data.forEach((item, index) => {
-                const labelInput = document.getElementById(`label${index}`);
-                const valueInput = document.getElementById(`value${index}`);
-                if (labelInput && valueInput) {
-                    item.label = labelInput.value;
-                    item.value = parseFloat(valueInput.value) || 0;
-                }
-            });
+            // Atualizar orçamento total
+            const newTotalBudget = parseFloat(document.getElementById('totalBudget').value) || 10000;
+            const currentTotal = data.reduce((sum, item) => sum + item.value, 0);
+            
+            // Se o orçamento total mudou, ajustar proporcionalmente
+            if (newTotalBudget !== currentTotal) {
+                const ratio = newTotalBudget / currentTotal;
+                data.forEach((item, index) => {
+                    const labelInput = document.getElementById(`label${index}`);
+                    const valueInput = document.getElementById(`value${index}`);
+                    if (labelInput && valueInput) {
+                        item.label = labelInput.value;
+                        item.value = Math.round(parseFloat(valueInput.value) * ratio) || 0;
+                    }
+                });
+                totalBudget = newTotalBudget;
+            } else {
+                // Apenas atualizar labels e valores normalmente
+                data.forEach((item, index) => {
+                    const labelInput = document.getElementById(`label${index}`);
+                    const valueInput = document.getElementById(`value${index}`);
+                    if (labelInput && valueInput) {
+                        item.label = labelInput.value;
+                        item.value = parseFloat(valueInput.value) || 0;
+                    }
+                });
+                totalBudget = data.reduce((sum, item) => sum + item.value, 0);
+            }
 
             drawPieChart();
             updateLegend();
