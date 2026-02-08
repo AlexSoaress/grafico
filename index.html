@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuição do Orçamento PJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a2e;
+            --accent-1: #ff6b6b;
+            --accent-2: #4ecdc4;
+            --accent-3: #ffe66d;
+            --accent-4: #a8e6cf;
+            --accent-5: #ffd3b6;
+            --bg: #f8f9fa;
+            --text: #2d3748;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #718096;
+            font-weight: 300;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .chart-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            filter: drop-shadow(0 10px 30px var(--shadow));
+            transition: transform 0.3s ease;
+        }
+
+        canvas:hover {
+            transform: scale(1.02);
+        }
+
+        .legend {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .legend-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border-left: 5px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            animation: fadeIn 0.5s ease-out backwards;
+        }
+
+        .legend-item:nth-child(1) { 
+            border-color: var(--accent-1); 
+            animation-delay: 0.1s;
+        }
+        .legend-item:nth-child(2) { 
+            border-color: var(--accent-2); 
+            animation-delay: 0.2s;
+        }
+        .legend-item:nth-child(3) { 
+            border-color: var(--accent-3); 
+            animation-delay: 0.3s;
+        }
+        .legend-item:nth-child(4) { 
+            border-color: var(--accent-4); 
+            animation-delay: 0.4s;
+        }
+        .legend-item:nth-child(5) { 
+            border-color: var(--accent-5); 
+            animation-delay: 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .legend-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 8px 20px var(--shadow);
+        }
+
+        .legend-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .legend-percent {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .legend-value {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-top: 0.25rem;
+        }
+
+        .total-box {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #2d3748 100%);
+            border-radius: 16px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 30px rgba(26, 26, 46, 0.3);
+        }
+
+        .total-label {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .total-value {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        .edit-mode {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: #f7fafc;
+            border-radius: 16px;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .edit-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        input {
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Work Sans', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 2rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .legend-item {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Distribuição do Orçamento</h1>
+            <p class="subtitle">Planejamento Financeiro PJ 2026</p>
+        </header>
+
+        <div class="content">
+            <div class="chart-container">
+                <canvas id="pieChart" width="500" height="500"></canvas>
+            </div>
+
+            <div>
+                <div class="legend" id="legend"></div>
+                
+                <div class="total-box">
+                    <div class="total-label">Orçamento Total Mensal</div>
+                    <div class="total-value" id="totalValue">R$ 10.000,00</div>
+                </div>
+
+                <div class="edit-mode" style="display: none;" id="editMode">
+                    <div class="edit-title">✏️ Editar Valores</div>
+                    <div id="editInputs"></div>
+                    <button onclick="updateChart()">Atualizar Gráfico</button>
+                    <button onclick="toggleEdit()" style="background: #718096;">Cancelar</button>
+                </div>
+
+                <button onclick="toggleEdit()" style="width: 100%; margin-top: 2rem;">
+                    ✏️ Editar Valores
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = [
+            { label: 'Necessidades básicas', value: 5500, color: '#ff6b6b' },
+            { label: 'Investimentos longo prazo', value: 1500, color: '#4ecdc4' },
+            { label: 'Lazer', value: 1000, color: '#ffe66d' },
+            { label: 'Fundo de emergência', value: 1000, color: '#a8e6cf' },
+            { label: 'Educação', value: 1000, color: '#ffd3b6' }
+        ];
+
+        function drawPieChart() {
+            const canvas = document.getElementById('pieChart');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 180;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            let currentAngle = -Math.PI / 2;
+
+            // Draw shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 10;
+
+            data.forEach((item, index) => {
+                const sliceAngle = (item.value / total) * 2 * Math.PI;
+                
+                // Draw slice
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+                ctx.lineTo(centerX, centerY);
+                ctx.fillStyle = item.color;
+                ctx.fill();
+
+                // Draw white border
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                currentAngle += sliceAngle;
+            });
+
+            // Reset shadow for center circle
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+
+            // Draw center white circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.5, 0, 2 * Math.PI);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+
+            // Draw center text
+            ctx.fillStyle = '#1a1a2e';
+            ctx.font = 'bold 24px "Work Sans"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('R$ ' + formatMoney(total), centerX, centerY - 10);
+            
+            ctx.font = '16px "Work Sans"';
+            ctx.fillStyle = '#718096';
+            ctx.fillText('Total Mensal', centerX, centerY + 15);
+        }
+
+        function formatMoney(value) {
+            return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function updateLegend() {
+            const legend = document.getElementById('legend');
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            
+            legend.innerHTML = data.map(item => {
+                const percent = ((item.value / total) * 100).toFixed(1);
+                return `
+                    <div class="legend-item" style="border-color: ${item.color}">
+                        <div class="legend-header">
+                            <span class="legend-title">${item.label}</span>
+                            <span class="legend-percent">${percent}%</span>
+                        </div>
+                        <div class="legend-value">R$ ${formatMoney(item.value)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateTotal() {
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            document.getElementById('totalValue').textContent = 'R$ ' + formatMoney(total);
+        }
+
+        function toggleEdit() {
+            const editMode = document.getElementById('editMode');
+            if (editMode.style.display === 'none') {
+                editMode.style.display = 'block';
+                const editInputs = document.getElementById('editInputs');
+                editInputs.innerHTML = data.map((item, index) => `
+                    <div class="input-group">
+                        <input type="text" value="${item.label}" id="label${index}" placeholder="Categoria">
+                        <input type="number" value="${item.value}" id="value${index}" placeholder="Valor (R$)" step="100">
+                    </div>
+                `).join('');
+            } else {
+                editMode.style.display = 'none';
+            }
+        }
+
+        function updateChart() {
+            data.forEach((item, index) => {
+                const labelInput = document.getElementById(`label${index}`);
+                const valueInput = document.getElementById(`value${index}`);
+                if (labelInput && valueInput) {
+                    item.label = labelInput.value;
+                    item.value = parseFloat(valueInput.value) || 0;
+                }
+            });
+
+            drawPieChart();
+            updateLegend();
+            updateTotal();
+            toggleEdit();
+        }
+
+        // Initialize
+        drawPieChart();
+        updateLegend();
+        updateTotal();
+
+        // Redraw on window resize
+        window.addEventListener('resize', () => {
+            drawPieChart();
+        });
+    </script>
+</body>
+</html>
